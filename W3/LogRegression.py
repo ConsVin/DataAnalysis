@@ -13,7 +13,7 @@ def sigma_func(x):
     return float(1) / (float(1) + np.exp(-x))
 
 def gradient_descent(X,Y,W,C,k):
-    pred = X*W          ; #Scalar Product
+    pred = X.dot(W.transpose())          ; #Scalar Product
     prob = -pred*Y       ; 
     t = float(1) - float(1)/(float(1) + np.exp(prob));
     a    = X*Y; #Scalar XY
@@ -23,30 +23,36 @@ def gradient_descent(X,Y,W,C,k):
     Wupd = W + step;
     return Wupd
 #%% Part 1, Load Values
-data = np.loadtxt('data_logistic.csv', delimiter=",",skiprows = 1)
-Y = np.zeros((204,1));
+data = np.loadtxt('data_logistic.csv', delimiter=",",skiprows = 0)
+Y = np.zeros((205,1));
 Y[:,0]= data[:,0];
 y_true = data[:,0];
 X = data[:,1:];
 #%%
 W =np.array([[0,0]]);
-dist = list();
 threshold = 1E-5;
 k = 0.1;
-C = 10
-for i in xrange(1,10000):
-    Wupd = gradient_descent (X,Y,W,C,k);
-    d = np.linalg.norm(Wupd-W);
-    dist.append(d);
-    W = Wupd;
-    if (d < threshold):
-        break;
-print "Stop at %d step" % i        
-plt.figure(0)
-plt.plot(dist);
-yPred = X.dot(W.transpose());
-yPredProb = sigma_func(yPred);
-plt.figure(1)
-plt.plot(yPredProb);
-a = aucroc(y_true,yPredProb);
-print 'AUC_ROC %2.4f' %a
+aucrocList = list();
+for C in [0,10]:
+    dist = list();
+    for i in xrange(1,10000):
+        Wupd = gradient_descent (X,Y,W,C,k);
+        d = np.linalg.norm(Wupd-W);
+        dist.append(d);
+        W = Wupd;
+        if (d < threshold):
+            break;
+в    print "Stop at %d step" % i        
+    plt.figure()
+    plt.plot(dist);
+    yPred = X.dot(W.transpose());
+    yPredProb = sigma_func(yPred);
+    plt.figure()
+    plt.plot(yPredProb);
+    a = aucroc(y_true,yPredProb);
+    aucrocList.append(a);
+    print 'AUC_ROC %2.4f' %a
+#%%
+f = open('log_regress.txt','w+')   
+f.write('%2.3f %2.3f' %  (aucrocList[0],aucrocList[1]))
+f.close()
